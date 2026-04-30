@@ -1,29 +1,52 @@
-const API_BASE = '/api';
+/* ═══════════════════════════════════════════════════════════════════════════
+   api/client.js — API Client
+   ═══════════════════════════════════════════════════════════════════════════
+   Two functions:
+   1. fetchRecommendation — POSTs UserInput to /recommend
+   2. fetchScoreInsights  — POSTs the full response to /explain-scores
+      to get OpenAI-powered per-score reasoning
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * Call the backend recommendation endpoint.
- * @param {object} payload — UserInput fields matching the backend schema
- * @returns {Promise<object>} — RecommendationResponse
+ * Send a UserInput payload to the backend and return the RecommendationResponse.
+ *
+ * @param {object} userInput — matches the backend's UserInput schema
+ * @returns {Promise<object>} — RecommendationResponse from FastAPI
  */
-export async function fetchRecommendation(payload) {
-  const response = await fetch(`${API_BASE}/recommend`, {
+export async function fetchRecommendation(userInput) {
+  const response = await fetch('/recommend', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(userInput),
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new Error(error.detail || `API error ${response.status}`);
+    const errorBody = await response.text();
+    throw new Error(`API Error ${response.status}: ${errorBody}`);
   }
 
   return response.json();
 }
 
 /**
- * Simple health check.
+ * Send the full recommendation response to the backend for OpenAI-powered
+ * per-score insights. Returns { available: boolean, insights: {...} }.
+ *
+ * @param {object} recommendationResponse — the full backend response
+ * @returns {Promise<{available: boolean, insights: object}>}
  */
-export async function healthCheck() {
-  const response = await fetch(`${API_BASE}/health`);
-  return response.json();
+export async function fetchScoreInsights(recommendationResponse) {
+  try {
+    const response = await fetch('/explain-scores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(recommendationResponse),
+    });
+
+    if (!response.ok) return { available: false, insights: {} };
+
+    return response.json();
+  } catch {
+    return { available: false, insights: {} };
+  }
 }

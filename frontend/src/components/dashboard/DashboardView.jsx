@@ -1,61 +1,117 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import InputForm from './InputForm';
+/* ═══════════════════════════════════════════════════════════════════════════
+   components/dashboard/DashboardView.jsx
+   ═══════════════════════════════════════════════════════════════════════════
+   Main "Dashboard" page — results only. No input form here.
+   When no results exist, shows a prompt to navigate to User Profiling.
+   When results are ready: MetricCards → PolicyTable → InsightsCard →
+   ExplanationCard.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+import { UserCircle } from 'lucide-react';
 import MetricCards from './MetricCards';
 import PolicyTable from './PolicyTable';
-import LoadingState from '../shared/LoadingState';
-import ErrorState from '../shared/ErrorState';
+import ExplanationCard from './ExplanationCard';
+import InsightsCard from './InsightsCard';
 
-const DashboardView = ({ result, loading, error, onSubmit, onReset, onSelectPolicy }) => {
+export default function DashboardView({
+  status,
+  metrics,
+  policies,
+  explanation,
+  criticIssues,
+  regulatoryNote,
+  insights,
+  insightsLoading,
+  userName,
+  onGoToProfiler,
+}) {
+  const hasResults = status === 'success';
+
   return (
-    <AnimatePresence mode="wait">
-      {loading ? (
-        <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <LoadingState />
-        </motion.div>
-      ) : error ? (
-        <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <ErrorState message={error} onRetry={onReset} />
-        </motion.div>
-      ) : result ? (
-        <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-6xl mx-auto">
-          {/* Profile bar */}
-          <div className="glass-strong rounded-2xl p-5 flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full gradient-brand-vivid flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/20">
-                {(result._name || 'U').charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="text-base font-semibold text-white">{result._name || 'User'}</p>
-                <p className="text-sm text-white/30">
-                  Age {result.user_profile.age} · ₹{result.user_profile.income.toLocaleString('en-IN')}/yr
-                  · {result.user_profile.life_stage.replace(/_/g, ' ')}
-                  · {result.user_profile.dependents} dependent{result.user_profile.dependents !== 1 ? 's' : ''}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onReset}
-              className="text-sm font-medium text-indigo-400 hover:text-indigo-300 px-5 py-2.5 rounded-xl
-                border border-indigo-500/20 hover:border-indigo-500/40 hover:bg-indigo-500/10 transition-all"
-            >
-              ← Edit Profile
-            </button>
-          </div>
-
-          <MetricCards result={result} />
-          <PolicyTable
-            policies={result.top_policies}
-            finalPolicyName={result.final_recommendation.policy.policy_name}
-            onSelectPolicy={onSelectPolicy}
+    <div id="dashboard-view">
+      {/* ── Loading State ──────────────────────────────────────────── */}
+      {status === 'loading' && (
+        <div className="card p-12 text-center" id="loading-state">
+          <div
+            className="w-8 h-8 rounded-full mx-auto mb-4 animate-spin"
+            style={{
+              border: '3px solid var(--color-border-soft)',
+              borderTopColor: 'var(--color-sand)',
+            }}
           />
-        </motion.div>
-      ) : (
-        <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <InputForm onSubmit={onSubmit} loading={loading} />
-        </motion.div>
+          <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+            Agents are processing your request…
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+            Profiling → Risk → Simulation → Evaluation → Critique
+          </p>
+        </div>
       )}
-    </AnimatePresence>
-  );
-};
 
-export default DashboardView;
+      {/* ── Idle State — direct user to Profiling tab ──────────────── */}
+      {status === 'idle' && (
+        <div className="card p-12 text-center" id="idle-state">
+          <div
+            className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-cream), var(--color-cream-dark))',
+              border: '1px solid var(--color-border-soft)',
+            }}
+          >
+            <span className="text-2xl">🛡️</span>
+          </div>
+          <h3
+            className="text-lg font-semibold mb-2"
+            style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)' }}
+          >
+            No Results Yet
+          </h3>
+          <p className="text-[13px] mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+            Head to <strong>User Profiling</strong> to enter your details and run the multi-agent pipeline.
+          </p>
+          <button className="btn-primary" onClick={onGoToProfiler}>
+            <UserCircle size={15} />
+            Go to User Profiling
+          </button>
+        </div>
+      )}
+
+      {/* ── Error State ────────────────────────────────────────────── */}
+      {status === 'error' && (
+        <div className="card p-8 text-center" id="error-state" style={{ borderTop: '3px solid var(--color-danger)' }}>
+          <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-danger)' }}>
+            Something went wrong
+          </p>
+          <p className="text-[12px] mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+            Please check the backend is running on port 8000 and try again.
+          </p>
+          <button className="btn-soft" onClick={onGoToProfiler}>
+            <UserCircle size={14} />
+            Back to Profiling
+          </button>
+        </div>
+      )}
+
+      {/* ── Success State: Results ─────────────────────────────────── */}
+      {hasResults && (
+        <>
+          {/* Greeting */}
+          {userName && (
+            <p className="text-[13px] mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+              Showing results for <strong style={{ color: 'var(--color-text-primary)' }}>{userName}</strong>
+            </p>
+          )}
+
+          <MetricCards metrics={metrics} />
+          <PolicyTable policies={policies} />
+          <InsightsCard insights={insights} insightsLoading={insightsLoading} />
+          <ExplanationCard
+            explanation={explanation}
+            criticIssues={criticIssues}
+            regulatoryNote={regulatoryNote}
+          />
+        </>
+      )}
+    </div>
+  );
+}

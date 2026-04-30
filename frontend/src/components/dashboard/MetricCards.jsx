@@ -1,59 +1,70 @@
-import { motion } from 'framer-motion';
-import { ShieldAlert, TrendingDown, Target, Award } from 'lucide-react';
-import AnimatedCard from '../shared/AnimatedCard';
-import { formatCurrency } from '../../utils/formatters';
-import { getRiskColor } from '../../adapters/responseAdapter';
+/* ═══════════════════════════════════════════════════════════════════════════
+   components/dashboard/MetricCards.jsx
+   ═══════════════════════════════════════════════════════════════════════════
+   Row of 4 metric cards: Risk Score, Expected Loss, Suggested Premium,
+   AI Confidence. Each is a tactile .card with a colored top accent border.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-const MetricCards = ({ result }) => {
-  const metrics = [
-    {
-      label: 'Risk Score',
-      value: `${result.risk_score.toFixed(1)}`,
-      sub: `/ 100 — ${result.risk_label.toUpperCase()}`,
-      icon: ShieldAlert,
-      color: getRiskColor(result.risk_label),
-    },
-    {
-      label: 'Expected Loss',
-      value: formatCurrency(result.expected_loss),
-      sub: 'Annual across all scenarios',
-      icon: TrendingDown,
-      color: '#f87171',
-    },
-    {
-      label: 'AI Confidence',
-      value: `${result.confidence_score.toFixed(1)}%`,
-      sub: 'Critic validation',
-      icon: Target,
-      color: '#818cf8',
-    },
-    {
-      label: 'Best Policy',
-      value: result.final_recommendation.policy.policy_name,
-      sub: `Score: ${result.final_recommendation.total_score.toFixed(1)}`,
-      icon: Award,
-      color: '#a78bfa',
-      isText: true,
-    },
-  ];
+import { ShieldCheck, TrendingDown, Wallet, Brain } from 'lucide-react';
+
+/* Icon mapping by index (matches the order from extractMetrics) */
+const ICONS = [ShieldCheck, TrendingDown, Wallet, Brain];
+
+/* Top accent colors */
+const ACCENT_COLORS = [
+  'var(--color-info)',
+  'var(--color-danger)',
+  'var(--color-sand-dark)',
+  'var(--color-success)',
+];
+
+export default function MetricCards({ metrics }) {
+  if (!metrics || metrics.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+    <div className="grid grid-cols-4 gap-4 mb-6" id="metric-cards">
       {metrics.map((m, i) => {
-        const Icon = m.icon;
+        const Icon = ICONS[i] ?? ShieldCheck;
         return (
-          <AnimatedCard key={m.label} delay={i * 0.08} className="p-6">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: `${m.color}12` }}>
-              <Icon className="w-5 h-5" style={{ color: m.color }} />
+          <div
+            key={m.label}
+            className="card p-4 relative overflow-hidden"
+            style={{ borderTop: `3px solid ${ACCENT_COLORS[i]}` }}
+          >
+            {/* Icon + Label */}
+            <div className="flex items-center gap-2 mb-3">
+              <Icon size={16} style={{ color: ACCENT_COLORS[i] }} />
+              <span
+                className="text-[11px] font-semibold uppercase tracking-wider"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                {m.label}
+              </span>
             </div>
-            <p className="text-[11px] font-bold text-white/25 uppercase tracking-[2px] mb-1.5">{m.label}</p>
-            <p className={`${m.isText ? 'text-lg' : 'text-3xl'} font-extrabold text-white leading-tight`}>{m.value}</p>
-            <p className="text-xs text-white/20 mt-1.5">{m.sub}</p>
-          </AnimatedCard>
+
+            {/* Value */}
+            <p
+              className="text-2xl font-bold tracking-tight"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)' }}
+            >
+              {m.value}
+            </p>
+
+            {/* Sublabel / Badge */}
+            <div className="mt-2">
+              {m.variant !== 'neutral' ? (
+                <span className={`badge badge-${m.variant}`}>
+                  {m.sublabel}
+                </span>
+              ) : (
+                <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+                  {m.sublabel}
+                </span>
+              )}
+            </div>
+          </div>
         );
       })}
     </div>
   );
-};
-
-export default MetricCards;
+}

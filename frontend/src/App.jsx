@@ -1,94 +1,122 @@
-import { useState, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import Layout from './components/layout/Layout';
-import InputForm from './components/dashboard/InputForm';
-import RiskAnalysisTab from './components/deepdive/RiskAnalysisTab';
-import ScenarioSimulationTab from './components/deepdive/ScenarioSimulationTab';
-import PolicyEvaluationTab from './components/deepdive/PolicyEvaluationTab';
-import CriticInsightsTab from './components/deepdive/CriticInsightsTab';
-import RecommendationTab from './components/deepdive/RecommendationTab';
-import PipelineTraceTab from './components/deepdive/PipelineTraceTab';
-import LoadingState from './components/shared/LoadingState';
-import ErrorState from './components/shared/ErrorState';
+/* ═══════════════════════════════════════════════════════════════════════════
+   App.jsx — Application Shell
+   ═══════════════════════════════════════════════════════════════════════════
+   Layout: Fixed sidebar (240px) + scrollable main content area.
+   Pages:
+     - dashboard:  Results only (metrics, policies, insights)
+     - profile:    Full input form (User Profiling tab)
+     - risk:       Scenario simulation breakdown
+     - trace:      Agent execution trace
+     - scenarios:  Same as risk (alias)
+   State is managed via useRecommendation() — single source of truth.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+import { useState, useCallback, useEffect } from 'react';
+import Sidebar from './components/layout/Sidebar';
+import Header from './components/layout/Header';
+import DashboardView from './components/dashboard/DashboardView';
+import ProfilingView from './components/pages/ProfilingView';
+import ScenarioView from './components/pages/ScenarioView';
+import TraceView from './components/pages/TraceView';
+import LoginView from './components/pages/LoginView';
 import { useRecommendation } from './hooks/useRecommendation';
+import { supabase } from './api/supabase';
 
-function App() {
-  const { result, loading, error, submitRecommendation, reset } = useRecommendation();
-  const [activeTab, setActiveTab] = useState('risk');
-  const [userName, setUserName] = useState('');
+export default function App() {
+  const [activePage, setActivePage] = useState('profile');
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  const hasResults = !!result && !loading;
+  /* Check active session on mount */
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
 
-  const handleSubmit = useCallback((payload) => {
-    setUserName(payload._name || 'User');
-    const { _name, ...apiPayload } = payload;
-    submitRecommendation(apiPayload);
-    setActiveTab('risk'); // default to Risk Analysis after submit
-  }, [submitRecommendation]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
-  const handleReset = useCallback(() => {
-    reset();
-    setUserName('');
-    setActiveTab('risk');
-  }, [reset]);
-
-  const handleNavigate = useCallback((view) => {
-    if (view === 'form') {
-      handleReset();
-    }
-  }, [handleReset]);
-
-  const handleTabChange = useCallback((tabId) => {
-    setActiveTab(tabId);
+    return () => subscription.unsubscribe();
   }, []);
 
-  const enrichedResult = result ? { ...result, _name: userName } : null;
+  /* Central recommendation state — single source of truth */
+  const rec = useRecommendation();
 
-  const renderTab = () => {
-    if (!enrichedResult) return null;
-    switch (activeTab) {
-      case 'risk': return <RiskAnalysisTab result={enrichedResult} />;
-      case 'scenario': return <ScenarioSimulationTab result={enrichedResult} />;
-      case 'policies': return <PolicyEvaluationTab result={enrichedResult} />;
-      case 'critic': return <CriticInsightsTab result={enrichedResult} />;
-      case 'recommendation': return <RecommendationTab result={enrichedResult} />;
-      case 'trace': return <PipelineTraceTab result={enrichedResult} />;
-      default: return <RiskAnalysisTab result={enrichedResult} />;
+  /* Navigate to dashboard after submission */
+  const handleSubmit = useCallback(async (userInput) => {
+    await rec.submit(userInput);
+    setActivePage('dashboard');
+  }, [rec.submit]);
+
+  /* Navigate to profiler from dashboard idle state */
+  const goToProfiler = useCallback(() => setActivePage('profile'), []);
+  const goToDashboard = useCallback(() => setActivePage('dashboard'), []);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-cream)' }}>
+        <div className="animate-spin w-8 h-8 rounded-full border-4 border-solid border-[var(--color-sand)] border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginView onLogin={setUser} />;
+  }
+
+  /* ── Page Content Renderer ─────────────────────────────────────── */
+  const renderPage = () => {
+    switch (activePage) {
+      case 'dashboard':
+        return (
+          <DashboardView
+            status={rec.status}
+            metrics={rec.metrics}
+            policies={rec.policies}
+            explanation={rec.explanation}
+            criticIssues={rec.criticIssues}
+            regulatoryNote={rec.regulatoryNote}
+            insights={rec.insights}
+            insightsLoading={rec.insightsLoading}
+            userName={rec.userName}
+            onGoToProfiler={goToProfiler}
+          />
+        );
+      case 'profile':
+        return (
+          <ProfilingView
+            user={user}
+            onSubmit={handleSubmit}
+            isLoading={rec.status === 'loading'}
+            hasResults={rec.status === 'success'}
+            onViewResults={goToDashboard}
+          />
+        );
+      case 'risk':
+      case 'scenarios':
+        return <ScenarioView scenarios={rec.scenarios} />;
+      case 'trace':
+        return <TraceView trace={rec.trace} />;
+      default:
+        return null;
     }
   };
 
-  const currentView = loading ? 'loading' : error ? 'error' : hasResults ? 'results' : 'form';
-
   return (
-    <Layout
-      currentView={currentView}
-      activeTab={activeTab}
-      onNavigate={handleNavigate}
-      onTabChange={handleTabChange}
-      hasResults={hasResults}
-    >
-      <AnimatePresence mode="wait">
-        {loading ? (
-          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <LoadingState />
-          </motion.div>
-        ) : error ? (
-          <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <ErrorState message={error} onRetry={handleReset} />
-          </motion.div>
-        ) : hasResults ? (
-          <motion.div key={`tab-${activeTab}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }}>
-            {renderTab()}
-          </motion.div>
-        ) : (
-          <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <InputForm onSubmit={handleSubmit} loading={loading} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </Layout>
+    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--color-cream)' }}>
+      {/* ── Sidebar ────────────────────────────────────────────────── */}
+      <Sidebar activePage={activePage} onNavigate={setActivePage} />
+
+      {/* ── Main Content ───────────────────────────────────────────── */}
+      <main
+        className="flex-1 min-h-screen"
+        style={{ marginLeft: '240px', padding: '28px 32px' }}
+      >
+        <Header activePage={activePage} status={rec.status} user={user} onLogout={() => supabase.auth.signOut()} />
+        {renderPage()}
+      </main>
+    </div>
   );
 }
-
-export default App;

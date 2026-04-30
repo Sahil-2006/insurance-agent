@@ -1,22 +1,79 @@
-import { Sparkles } from 'lucide-react';
+/* ═══════════════════════════════════════════════════════════════════════════
+   components/layout/Header.jsx
+   ═══════════════════════════════════════════════════════════════════════════
+   Minimal page header. Shows the page title (serif) and a session status
+   pill badge on the right.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-const Header = () => {
+import { Circle } from 'lucide-react';
+
+const PAGE_TITLES = {
+  dashboard: 'Agent Dashboard',
+  profile:   'User Profiling',
+  risk:      'Risk Simulator',
+  trace:     'Agent Trace',
+  scenarios: 'Scenario Simulation',
+};
+
+export default function Header({ activePage, status, user, onLogout }) {
+  const title = PAGE_TITLES[activePage] ?? 'Dashboard';
+
+  /* Status dot color */
+  const dotColor =
+    status === 'success' ? 'var(--color-success)' :
+    status === 'loading' ? 'var(--color-warning)' :
+    status === 'error'   ? 'var(--color-danger)'  :
+                           'var(--color-text-muted)';
+
+  const statusLabel =
+    status === 'success' ? 'Results Ready' :
+    status === 'loading' ? 'Processing…' :
+    status === 'error'   ? 'Error' :
+                           'Awaiting Input';
+
   return (
-    <header
-      className="h-14 flex items-center justify-end px-8 sticky top-0 z-40 flex-shrink-0"
-      style={{
-        background: 'rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(30px) saturate(130%)',
-        WebkitBackdropFilter: 'blur(30px) saturate(130%)',
-        borderBottom: '1px solid rgba(255,255,255,0.03)',
-      }}
-    >
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass border border-indigo-500/10">
-        <Sparkles className="w-3 h-3 text-indigo-400" />
-        <span className="text-[10px] font-bold tracking-widest uppercase text-indigo-400/70">AI-Powered</span>
+    <header id="page-header" className="flex items-center justify-between mb-6">
+      <div>
+        <h2
+          className="text-2xl font-semibold tracking-tight"
+          style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)' }}
+        >
+          {title}
+        </h2>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+          InsureAI — Autonomous Adaptive Insurance Planning
+        </p>
+      </div>
+
+      {/* Session status pill & Auth */}
+      <div className="flex items-center gap-4">
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-semibold"
+          style={{
+            border: '1px solid var(--color-border-soft)',
+            color: 'var(--color-text-secondary)',
+            backgroundColor: 'var(--color-surface)',
+          }}
+        >
+          <Circle size={7} fill={dotColor} stroke={dotColor} />
+          {statusLabel}
+        </div>
+
+        {user && (
+          <div className="flex items-center gap-3">
+            <span className="text-[12px] font-medium" style={{ color: 'var(--color-espresso)' }}>
+              {user.email}
+            </span>
+            <button
+              onClick={onLogout}
+              className="text-[11px] font-bold uppercase tracking-wider hover:underline"
+              style={{ color: 'var(--color-danger)' }}
+            >
+              Sign Out
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );
-};
-
-export default Header;
+}

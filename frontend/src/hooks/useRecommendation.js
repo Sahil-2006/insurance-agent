@@ -1,41 +1,99 @@
-import { useState, useCallback } from 'react';
-import { fetchRecommendation } from '../api/client';
+/* ═══════════════════════════════════════════════════════════════════════════
+   hooks/useRecommendation.js — Central state hook
+   ═══════════════════════════════════════════════════════════════════════════
+   Manages the full lifecycle:
+     1. idle → loading → success / error  (recommendation)
+     2. After success, automatically fetches AI insights from OpenAI
+   Wraps the API calls and exposes pre-transformed data via the adapter.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+import { useState, useCallback, useMemo } from 'react';
+import { fetchRecommendation, fetchScoreInsights } from '../api/client';
+import {
+  extractMetrics,
+  extractPolicies,
+  extractProfile,
+  extractTrace,
+  extractScenarios,
+} from '../adapters/responseAdapter';
 
 /**
- * Custom hook for managing recommendation state and API calls.
+ * @returns {object} — { status, rawResponse, metrics, policies, profile,
+ *   trace, scenarios, explanation, criticIssues, insights, insightsLoading,
+ *   submit, reset, userName }
  */
 export function useRecommendation() {
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('idle');      // idle | loading | success | error
+  const [rawResponse, setRawResponse] = useState(null);
   const [error, setError] = useState(null);
-  const [userPayload, setUserPayload] = useState(null);
+  const [userName, setUserName] = useState('');
 
-  const submitRecommendation = useCallback(async (payload) => {
-    setLoading(true);
+  /* AI Insights state (from OpenAI) */
+  const [insights, setInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+
+  /* ── Memoized transforms — only recompute when rawResponse changes ── */
+  const metrics    = useMemo(() => extractMetrics(rawResponse),   [rawResponse]);
+  const policies   = useMemo(() => extractPolicies(rawResponse),  [rawResponse]);
+  const profile    = useMemo(() => extractProfile(rawResponse),   [rawResponse]);
+  const trace      = useMemo(() => extractTrace(rawResponse),     [rawResponse]);
+  const scenarios  = useMemo(() => extractScenarios(rawResponse), [rawResponse]);
+  const explanation   = rawResponse?.explanation ?? '';
+  const criticIssues  = rawResponse?.critic_issues ?? [];
+  const regulatoryNote = rawResponse?.regulatory_note ?? '';
+
+  /* ── Submit a recommendation request ── */
+  const submit = useCallback(async (userInput) => {
+    setStatus('loading');
     setError(null);
+    setInsights(null);
+    setUserName(userInput.name || '');
     try {
-      const data = await fetchRecommendation(payload);
-      setResult(data);
-      setUserPayload(payload);
+      const res = await fetchRecommendation(userInput);
+      setRawResponse(res);
+      setStatus('success');
+
+      /* ── Automatically fetch AI insights after success ── */
+      setInsightsLoading(true);
+      try {
+        const insightsRes = await fetchScoreInsights(res);
+        setInsights(insightsRes);
+      } catch {
+        /* AI insights are optional — fail silently */
+      } finally {
+        setInsightsLoading(false);
+      }
     } catch (err) {
-      setError(err.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
+      setError(err.message);
+      setStatus('error');
     }
   }, []);
 
+  /* ── Reset to idle state ── */
   const reset = useCallback(() => {
-    setResult(null);
+    setStatus('idle');
+    setRawResponse(null);
     setError(null);
-    setUserPayload(null);
+    setInsights(null);
+    setUserName('');
   }, []);
 
   return {
-    result,
-    loading,
+    status,
     error,
-    userPayload,
-    submitRecommendation,
+    rawResponse,
+    metrics,
+    policies,
+    profile,
+    trace,
+    scenarios,
+    explanation,
+    criticIssues,
+    regulatoryNote,
+    insights,
+    insightsLoading,
+    userName,
+    submit,
     reset,
   };
 }

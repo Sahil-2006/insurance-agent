@@ -16,6 +16,7 @@ AlcoholConsumption = Literal["none", "occasional", "moderate", "heavy"]
 class UserInput(BaseModel):
     """Raw user input accepted by the API and CLI."""
 
+    name: str = Field(default="", description="User's name for personalization (optional)")
     age: int = Field(default=30, ge=18, le=70)
     income: float = Field(default=600000, ge=0)
     dependents: int = Field(default=0, ge=0, le=10)
