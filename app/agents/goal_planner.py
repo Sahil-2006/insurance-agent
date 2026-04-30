@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import os
-import time
-from typing import List, Optional
+from typing import Any
 
 from app.core.plan import Plan
 from app.models import RankedPolicy
@@ -18,29 +17,57 @@ class GoalPlannerAgent:
     def __init__(self) -> None:
         self.primary_goal = "Find the most suitable policy available for the customer"
 
-    def generate_plan(self) -> Plan:
-        """Returns default steps."""
+    def generate_plan(self, memory: Any | None = None) -> Plan:
+        """Build a plan that can adapt to the available context."""
         steps = [
             "ProfileUserTool",
             "CalculateRiskTool",
             "SimulateScenarioTool",
+            "RecallMemoryTool",
             "EvaluatePoliciesTool",
             "ValidateCriticTool",
             "LearnAdaptiveTool",
             "CheckComplianceTool",
             "PersistMemoryTool"
         ]
+
+        if memory is not None:
+            user_input = memory.get("user_input")
+            if user_input and getattr(user_input, "dependents", 0) >= 2:
+                # Ensure the memory recall happens before the decision layer for more complex cases.
+                if "RecallMemoryTool" in steps:
+                    steps.remove("RecallMemoryTool")
+                    steps.insert(3, "RecallMemoryTool")
+
         return Plan(steps)
 
     def revise_plan_on_rejection(self) -> list[str]:
         """Returns steps for failure recovery."""
         revised_steps = [
+            "RecallMemoryTool",
             "EvaluatePoliciesTool",
             "ValidateCriticTool",
             "LearnAdaptiveTool",
+            "CheckComplianceTool",
             "PersistMemoryTool"
         ]
         return revised_steps
+
+    def reflect_on_step(self, step_name: str, result: dict[str, Any], memory: Any | None = None) -> list[str]:
+        """
+        Inspect the latest execution result and decide whether the plan should adapt.
+
+        This is intentionally simple, but it creates a visible reflection loop:
+        the system can react to critic and compliance signals instead of only
+        following a fixed path.
+        """
+        if step_name == "CheckComplianceTool" and result.get("status") == "warning":
+            return self.revise_plan_on_rejection()
+
+        if step_name == "ValidateCriticTool" and result.get("status") == "failure":
+            return self.revise_plan_on_rejection()
+
+        return []
 
     def build_explanation(
         self,

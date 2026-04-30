@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from app.agents.critic import CriticAgent
+from app.agents.goal_planner import GoalPlannerAgent
 from app.agents.policy_evaluation import PolicyEvaluationAgent
 from app.agents.recommendation import RecommendationAgent
 from app.agents.scenario_simulation import ScenarioSimulationAgent
@@ -106,6 +107,47 @@ def test_memory_store_saves_and_loads_recommendations(tmp_path: Path) -> None:
     assert signature
     assert len(history) == 1
     assert history[0]["recommendation"]["policy"]["policy_name"] == "Test Policy"
+
+
+def test_memory_store_can_retrieve_similar_recommendations(tmp_path: Path) -> None:
+    store = MemoryStore(storage_path=tmp_path / "memory.json")
+
+    profile = _build_sample_profile(age=36, income=850000, dependents=2, liabilities=1200000)
+    ranked_policy = RankedPolicy(
+        policy=Policy(
+            policy_name="Similar Policy",
+            policy_type="term_life",
+            coverage=4000000,
+            premium=22000,
+            target_profile=["family_protection", "family_builder", "moderate"],
+            notes="Similar test policy",
+        ),
+        total_score=86.0,
+        suitability_score=90.0,
+        affordability_score=84.0,
+        coverage_score=86.0,
+        utility_score=81.0,
+        premium_ratio=0.03,
+        coverage_gap=600000.0,
+        tradeoff_summary="A strong historical match.",
+        explanation_points=["Historical fit."],
+    )
+
+    signature = store.save_user_profile(profile)
+    store.save_recommendation(signature, ranked_policy)
+
+    retrieved = store.get_similar_recommendations(profile, limit=3)
+
+    assert retrieved
+    assert retrieved[0]["profile_signature"] == signature
+    assert retrieved[0]["similarity_score"] >= 0.99
+
+
+def test_goal_planner_includes_memory_recall_step() -> None:
+    plan = GoalPlannerAgent().generate_plan()
+
+    assert "RecallMemoryTool" in plan.steps
+    assert plan.steps.index("RecallMemoryTool") < plan.steps.index("EvaluatePoliciesTool")
 
 
 def test_critic_can_rerank_when_first_policy_has_clear_issues() -> None:

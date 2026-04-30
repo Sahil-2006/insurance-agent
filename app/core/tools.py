@@ -80,6 +80,7 @@ class EvaluatePoliciesTool(BaseTool):
         risk_score = memory.get("risk_score")
         risk_label = memory.get("risk_label")
         expected_loss = memory.get("expected_loss")
+        memory_context = memory.get("memory_context") or {}
         
         policies = load_policies()
         memory.set("raw_policies", policies)
@@ -89,10 +90,35 @@ class EvaluatePoliciesTool(BaseTool):
             policies=policies,
             risk_score=risk_score,
             risk_label=risk_label,
-            expected_loss=expected_loss
+            expected_loss=expected_loss,
+            memory_context=memory_context
         )
         memory.set("ranked_policies", ranked)
         return {"status": "success", "top_policy": ranked[0].policy.policy_name if ranked else None}
+
+
+class RecallMemoryTool(BaseTool):
+    name = "RecallMemoryTool"
+    description = "Retrieves similar past recommendations."
+
+    def __init__(self):
+        self.store = MemoryStore()
+
+    def execute(self, memory) -> Dict[str, Any]:
+        profile = memory.get("user_profile")
+        if not profile:
+            raise ValueError("user_profile not found in memory")
+
+        similar_recommendations = self.store.get_similar_recommendations(profile, limit=3)
+        memory_context = {
+            "similar_recommendations": similar_recommendations,
+            "has_history": bool(similar_recommendations),
+        }
+        memory.set("memory_context", memory_context)
+        return {
+            "status": "success",
+            "retrieved": len(similar_recommendations),
+        }
 
 class PersistMemoryTool(BaseTool):
     name = "PersistMemoryTool"

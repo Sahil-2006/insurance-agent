@@ -4,10 +4,9 @@ import time
 from typing import Dict, Any, List
 
 from app.core.shared_memory import SharedMemory
-from app.core.plan import Plan
 from app.core.tools import (
     ProfileUserTool, CalculateRiskTool, SimulateScenarioTool,
-    EvaluatePoliciesTool, ValidateCriticTool, LearnAdaptiveTool,
+    EvaluatePoliciesTool, RecallMemoryTool, ValidateCriticTool, LearnAdaptiveTool,
     CheckComplianceTool, PersistMemoryTool
 )
 from app.agents.goal_planner import GoalPlannerAgent
@@ -42,10 +41,11 @@ class OrchestratorAgent:
         Main execution loop.
         """
         self.memory.clear()
+        self.trace = []
         self.memory.set("user_input", user_input)
         
         # 1. Generate initial plan
-        plan = self.planner.generate_plan()
+        plan = self.planner.generate_plan(self.memory)
         self.memory.set("current_plan", plan)
         goal_achieved = False
         replanning_count = 0
@@ -84,6 +84,18 @@ class OrchestratorAgent:
                     agent_name="GoalPlannerAgent",
                     input_summary="Critic rejection detected",
                     output_summary=f"Revised plan due to suboptimal output (Replans: {replanning_count})",
+                    duration_ms=0.0
+                ))
+                continue
+
+            reflection_steps = self.planner.reflect_on_step(current_step, result, self.memory)
+            if reflection_steps:
+                replanning_count += 1
+                plan.revise_plan(reflection_steps)
+                self.trace.append(AgentTraceEntry(
+                    agent_name="GoalPlannerAgent",
+                    input_summary=f"Reflection after {current_step}",
+                    output_summary=f"Inserted adaptive recovery path ({replanning_count})",
                     duration_ms=0.0
                 ))
                 continue

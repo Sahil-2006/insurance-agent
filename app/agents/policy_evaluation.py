@@ -21,9 +21,12 @@ class PolicyEvaluationAgent:
         risk_score: float,
         risk_label: str,
         expected_loss: float,
+        memory_context: dict[str, object] | None = None,
     ) -> List[RankedPolicy]:
         """Score and rank policies from best to worst."""
         ranked_inputs: List[dict[str, object]] = []
+        memory_context = memory_context or {}
+        similar_recommendations = memory_context.get("similar_recommendations", [])
 
         recommended_coverage = max(profile.income * 10, 500000)
         if risk_label == "high":
@@ -48,12 +51,15 @@ class PolicyEvaluationAgent:
             raw_utility = policy.coverage - (policy.premium * premium_weight) - expected_loss
             premium_ratio = round(policy.premium / profile.income, 4) if profile.income > 0 else 1.0
             coverage_gap = round(max(recommended_coverage - policy.coverage, 0.0), 2)
+            memory_bonus, memory_reason = self._score_memory_signal(policy, similar_recommendations)
 
             explanation_points = suitability_reasons + [
                 f"Coverage {self._coverage_phrase(policy.coverage, recommended_coverage)} the estimated need.",
                 f"Premium is {self._premium_phrase(policy.premium, annual_budget)} for the user's budget.",
                 f"Expected loss of {expected_loss:.0f} was included in the utility calculation.",
             ]
+            if memory_reason:
+                explanation_points.append(memory_reason)
 
             ranked_inputs.append(
                 {
@@ -72,7 +78,7 @@ class PolicyEvaluationAgent:
                         expected_loss,
                     ),
                     "explanation_points": explanation_points,
-                    "ai_score": ai_scores[i] if i < len(ai_scores) else 0.0,
+                    "ai_score": min(100.0, (ai_scores[i] if i < len(ai_scores) else 0.0) + memory_bonus),
                 }
             )
 
@@ -107,6 +113,39 @@ class PolicyEvaluationAgent:
             )
 
         return sorted(ranked, key=lambda item: (item.total_score, item.utility_score), reverse=True)
+
+    def _score_memory_signal(self, policy: Policy, similar_recommendations: object) -> tuple[float, str]:
+        """
+        Lightly reward policies that match historically similar users.
+
+        This keeps memory retrieval interpretable while still allowing it to
+        shape the ranking outcome.
+        """
+        if not isinstance(similar_recommendations, list) or not similar_recommendations:
+            return 0.0, ""
+
+        matched = 0
+        top_similarity = 0.0
+        for item in similar_recommendations:
+            if not isinstance(item, dict):
+                continue
+            recommendation = item.get("recommendation")
+            if not isinstance(recommendation, dict):
+                continue
+
+            recommended_policy = recommendation.get("policy", {})
+            if not isinstance(recommended_policy, dict):
+                continue
+
+            if recommended_policy.get("policy_type") == policy.policy_type:
+                matched += 1
+                top_similarity = max(top_similarity, float(item.get("similarity_score", 0.0)))
+
+        if matched == 0:
+            return 0.0, ""
+
+        bonus = min(8.0, matched * 2.5 * max(0.5, top_similarity))
+        return bonus, f"Memory recall found {matched} similar historical recommendation(s) for this policy type."
 
     def _score_suitability(self, profile: UserProfile, policy: Policy, risk_label: str) -> tuple[float, List[str]]:
         score = 40.0
