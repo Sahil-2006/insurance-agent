@@ -14,9 +14,6 @@ import { supabase } from '../../api/supabase';
 const DEFAULTS = {
   name: '',
   age: '',
-  location: 'Urban',
-  state: '',
-  city: '',
   income: '',
   dependents: '',
   assets: '',
@@ -41,12 +38,6 @@ const ALCOHOL_OPTIONS = [
   { value: 'occasional', label: 'Occasional' },
   { value: 'moderate',   label: 'Moderate' },
   { value: 'heavy',      label: 'Heavy' },
-];
-
-const LOCATION_OPTIONS = [
-  { value: 'Urban',       label: 'Urban' },
-  { value: 'Semi-Urban',  label: 'Semi-Urban' },
-  { value: 'Rural',       label: 'Rural' },
 ];
 
 /* ── Shared input styles ─────────────────────────────────────────────── */
@@ -221,56 +212,6 @@ export default function ProfilingView({ user, onSubmit, isLoading, hasResults, o
                 style={inputStyle}
                 value={form.dependents}
                 onChange={(e) => set('dependents', e.target.value)}
-              />
-            </label>
-
-            {/* Location */}
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-                Location
-              </span>
-              <select
-                id="input-location"
-                className={inputClass}
-                style={inputStyle}
-                value={form.location}
-                onChange={(e) => set('location', e.target.value)}
-              >
-                {LOCATION_OPTIONS.map((g) => (
-                  <option key={g.value} value={g.value}>{g.label}</option>
-                ))}
-              </select>
-            </label>
-
-            {/* State */}
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-                State
-              </span>
-              <input
-                id="input-state"
-                type="text"
-                placeholder="e.g. Maharashtra"
-                className={inputClass}
-                style={inputStyle}
-                value={form.state}
-                onChange={(e) => set('state', e.target.value)}
-              />
-            </label>
-
-            {/* City */}
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-                City
-              </span>
-              <input
-                id="input-city"
-                type="text"
-                placeholder="e.g. Mumbai"
-                className={inputClass}
-                style={inputStyle}
-                value={form.city}
-                onChange={(e) => set('city', e.target.value)}
               />
             </label>
 
