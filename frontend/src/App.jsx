@@ -21,6 +21,7 @@ import RiskView from './components/pages/RiskView';
 import CriticView from './components/pages/CriticView';
 import TraceView from './components/pages/TraceView';
 import LoginView from './components/pages/LoginView';
+import LandingPage from './components/pages/LandingPage';
 import { useRecommendation } from './hooks/useRecommendation';
 import { supabase } from './api/supabase';
 
@@ -65,7 +66,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginView onLogin={setUser} />;
+    return <LandingPage onLogin={setUser} />;
   }
 
   /* ── Page Content Renderer ─────────────────────────────────────── */
