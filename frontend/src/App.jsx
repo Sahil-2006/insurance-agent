@@ -17,6 +17,7 @@ import Header from './components/layout/Header';
 import DashboardView from './components/dashboard/DashboardView';
 import ProfilingView from './components/pages/ProfilingView';
 import ScenarioView from './components/pages/ScenarioView';
+import RiskView from './components/pages/RiskView';
 import TraceView from './components/pages/TraceView';
 import LoginView from './components/pages/LoginView';
 import { useRecommendation } from './hooks/useRecommendation';
@@ -95,6 +96,7 @@ export default function App() {
           />
         );
       case 'risk':
+        return <RiskView metrics={rec.metrics} />;
       case 'scenarios':
         return <ScenarioView scenarios={rec.scenarios} />;
       case 'trace':
