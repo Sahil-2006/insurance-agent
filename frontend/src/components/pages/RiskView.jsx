@@ -109,6 +109,32 @@ export default function RiskView({ metrics }) {
         </div>
       </div>
 
+      {/* ── Factor legend ────────────────────────────────────────── */}
+      <div
+        className="card p-4"
+        style={{ backgroundColor: 'var(--color-cream)', border: '1px solid var(--color-border-soft)' }}
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wider mb-3"
+          style={{ color: 'var(--color-text-muted)' }}>
+          How Each Factor Is Scored
+        </p>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+          {[
+            { factor: 'Age', rule: 'Under 30 → 10 pts · 30–49 → 15 pts · 50+ → 8 pts' },
+            { factor: 'Dependents', rule: 'Dependents × 7, capped at 20 pts' },
+            { factor: 'Liability Ratio', rule: 'Liabilities ÷ Income × 15 (not dependents)' },
+            { factor: 'Income', rule: 'Under ₹5L → 15 pts · ₹5–12L → 9 pts · Above → 4 pts' },
+            { factor: 'Net Worth', rule: '≤ 0 → 10 pts · Under ₹10L → 7 pts · Above → 3 pts' },
+            { factor: 'Health', rule: 'Smoker / alcohol / severe conditions add up to 25 pts' },
+          ].map(({ factor, rule }) => (
+            <div key={factor} className="flex flex-col gap-0.5">
+              <p className="text-[11px] font-semibold" style={{ color: 'var(--color-text-primary)' }}>{factor}</p>
+              <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{rule}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── Interpretation ───────────────────────────────────────── */}
       <div className="card p-5">
         <p className="text-[11px] font-semibold uppercase tracking-wider mb-2"
