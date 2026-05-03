@@ -107,7 +107,7 @@ export default function LandingPage({ onLogin }) {
               className="text-[16px] font-bold tracking-tight"
               style={{ color: 'var(--color-espresso)', fontFamily: 'var(--font-serif)' }}
             >
-              InsureAI
+              InsuraX
             </span>
             <span
               className="ml-2 text-[10px] font-semibold uppercase tracking-widest"
@@ -187,7 +187,7 @@ export default function LandingPage({ onLogin }) {
           className="text-[17px] leading-relaxed max-w-xl mb-10"
           style={{ color: 'var(--color-text-secondary)' }}
         >
-          InsureAI runs a transparent multi-agent pipeline — profiling, risk scoring,
+          InsuraX runs a transparent multi-agent pipeline — profiling, risk scoring,
           scenario simulation, policy evaluation, and critic validation — to give you
           a recommendation you can actually understand.
         </p>
@@ -421,7 +421,7 @@ export default function LandingPage({ onLogin }) {
         }}
       >
         <p className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
-          © 2026 InsureAI · Academic prototype · Not a licensed insurance advisor
+          © 2026 InsuraX · Academic prototype · Not a licensed insurance advisor
         </p>
         <p className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
           IRDAI Note: For academic use only. Real deployment requires regulatory review.

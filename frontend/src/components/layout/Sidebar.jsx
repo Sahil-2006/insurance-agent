@@ -48,7 +48,7 @@ export default function Sidebar({ activePage, onNavigate }) {
               className="text-[15px] font-bold tracking-tight"
               style={{ color: 'var(--color-cream)', fontFamily: 'var(--font-serif)' }}
             >
-              InsureAI
+              InsuraX
             </h1>
             <p className="text-[10px] tracking-widest uppercase" style={{ color: 'var(--color-sand-light)' }}>
               Adaptive Agent
