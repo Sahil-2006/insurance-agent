@@ -18,6 +18,7 @@ import DashboardView from './components/dashboard/DashboardView';
 import ProfilingView from './components/pages/ProfilingView';
 import ScenarioView from './components/pages/ScenarioView';
 import RiskView from './components/pages/RiskView';
+import CriticView from './components/pages/CriticView';
 import TraceView from './components/pages/TraceView';
 import LoginView from './components/pages/LoginView';
 import { useRecommendation } from './hooks/useRecommendation';
@@ -99,6 +100,8 @@ export default function App() {
         return <RiskView metrics={rec.metrics} />;
       case 'scenarios':
         return <ScenarioView scenarios={rec.scenarios} />;
+      case 'critic':
+        return <CriticView rawResponse={rec.rawResponse} />;
       case 'trace':
         return <TraceView trace={rec.trace} />;
       default:
