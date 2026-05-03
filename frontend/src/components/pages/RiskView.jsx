@@ -110,10 +110,7 @@ export default function RiskView({ metrics }) {
       </div>
 
       {/* ── Factor legend ────────────────────────────────────────── */}
-      <div
-        className="card p-4"
-        style={{ backgroundColor: 'var(--color-cream)', border: '1px solid var(--color-border-soft)' }}
-      >
+      <div className="card p-4">
         <p className="text-[11px] font-semibold uppercase tracking-wider mb-3"
           style={{ color: 'var(--color-text-muted)' }}>
           How Each Factor Is Scored
