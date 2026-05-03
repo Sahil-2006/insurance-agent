@@ -6,6 +6,7 @@ from app.agents.critic import CriticAgent
 from app.agents.goal_planner import GoalPlannerAgent
 from app.agents.policy_evaluation import PolicyEvaluationAgent
 from app.agents.recommendation import RecommendationAgent
+from app.agents.risk_analysis import RiskAnalysisAgent
 from app.agents.scenario_simulation import ScenarioSimulationAgent
 from app.agents.user_profiling import UserProfilingAgent
 from app.memory.memory_store import MemoryStore
@@ -86,6 +87,28 @@ def test_scenario_simulation_with_high_liabilities() -> None:
     )
 
     assert high_income_loss.probability > low_income_loss.probability
+
+
+def test_risk_score_increases_with_dependents() -> None:
+    """Dependents should raise insurance need because more people rely on the user."""
+    agent = RiskAnalysisAgent()
+
+    no_dependents, _ = agent.calculate_risk(_build_sample_profile(dependents=0))
+    two_dependents, _ = agent.calculate_risk(_build_sample_profile(dependents=2))
+    four_dependents, _ = agent.calculate_risk(_build_sample_profile(dependents=4))
+
+    assert no_dependents < two_dependents < four_dependents
+
+
+def test_risk_score_increases_with_age_for_insurance_need() -> None:
+    """Older users should not be scored as lower risk than younger users."""
+    agent = RiskAnalysisAgent()
+
+    young_score, _ = agent.calculate_risk(_build_sample_profile(age=25))
+    midlife_score, _ = agent.calculate_risk(_build_sample_profile(age=45))
+    senior_score, _ = agent.calculate_risk(_build_sample_profile(age=60))
+
+    assert young_score < midlife_score < senior_score
 
 
 def test_memory_store_saves_and_loads_recommendations(tmp_path: Path) -> None:

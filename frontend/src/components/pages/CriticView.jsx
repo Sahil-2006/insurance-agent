@@ -154,10 +154,14 @@ export default function CriticView({ rawResponse }) {
               const statusColor = passed ? 'var(--color-success)' : failed ? 'var(--color-danger)' : 'var(--color-text-secondary)';
               const StatusIcon = passed ? CheckCircle : failed ? XCircle : null;
 
+              const isLongField = key === 'regulations_referenced' || key === 'issues' || (typeof value === 'string' && value.length > 35);
+
               return (
                 <div
                   key={key}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-lg"
+                  className={`px-3 py-2.5 rounded-lg ${
+                    isLongField ? 'col-span-2 flex flex-col items-start gap-1.5' : 'flex items-center justify-between'
+                  }`}
                   style={{ backgroundColor: 'var(--color-cream)', border: '1px solid var(--color-border-soft)' }}
                 >
                   <p className="text-[11px] font-medium capitalize" style={{ color: 'var(--color-text-primary)' }}>
@@ -165,7 +169,7 @@ export default function CriticView({ rawResponse }) {
                   </p>
                   <div className="flex items-center gap-1.5">
                     {StatusIcon && <StatusIcon size={12} style={{ color: statusColor }} />}
-                    <p className="text-[11px] font-semibold capitalize" style={{ color: statusColor }}>
+                    <p className={`text-[11px] ${isLongField ? 'font-normal leading-relaxed' : 'font-semibold capitalize'}`} style={{ color: statusColor }}>
                       {String(value)}
                     </p>
                   </div>
