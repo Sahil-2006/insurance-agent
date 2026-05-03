@@ -1,0 +1,162 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   index.css — InsureAI Soft-UI Design System
+   ═══════════════════════════════════════════════════════════════════════════
+   Tailwind CSS v4 import + custom design tokens.
+   NO glassmorphism. NO backdrop-blur. Pure tactile light UI.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import "tailwindcss";
+
+/* ── Custom Theme (Tailwind v4 CSS-first config) ─────────────────────────── */
+@theme {
+  /* ── Color Palette ───────────────────────────────────────────────────── */
+  --color-cream:          #F8F6F0;
+  --color-cream-dark:     #EDE9E0;
+  --color-espresso:       #3A2E2B;
+  --color-espresso-light: #4E3F3B;
+  --color-espresso-muted: #6B5B54;
+  --color-sand:           #C4A882;
+  --color-sand-light:     #D9C9AE;
+  --color-sand-dark:      #A88E6A;
+  --color-charcoal:       #2C2220;
+  --color-surface:        #FFFFFF;
+  --color-surface-alt:    #FCFAFC;
+  --color-border-soft:    #E8E2D9;
+  --color-text-primary:   #2C2220;
+  --color-text-secondary: #8A7B72;
+  --color-text-muted:     #B0A49A;
+  --color-success:        #4A9E6D;
+  --color-warning:        #D4943A;
+  --color-danger:         #C45B4A;
+  --color-info:           #5B8CB8;
+
+  /* ── Typography ──────────────────────────────────────────────────────── */
+  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
+
+  /* ── Shadows (warm, soft — no harsh blacks) ──────────────────────────── */
+  --shadow-card:    0 1px 3px rgba(58, 46, 43, 0.06), 0 4px 12px rgba(58, 46, 43, 0.04);
+  --shadow-card-hover: 0 2px 8px rgba(58, 46, 43, 0.10), 0 8px 24px rgba(58, 46, 43, 0.06);
+  --shadow-elevated: 0 4px 16px rgba(58, 46, 43, 0.08), 0 12px 32px rgba(58, 46, 43, 0.05);
+
+  /* ── Border Radius ───────────────────────────────────────────────────── */
+  --radius-card: 16px;
+  --radius-btn:  10px;
+  --radius-pill: 999px;
+}
+
+/* ── Base Layer ──────────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background-color: var(--color-cream);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  /* Serif headings by default */
+  h1, h2, h3 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Custom scrollbar — thin, warm tones */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-sand-light);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-sand);
+  }
+}
+
+/* ── Utility Classes ─────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Tactile card — the core visual primitive */
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .card:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  /* Soft button — sand gradient */
+  .btn-soft {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-espresso);
+    background: linear-gradient(135deg, var(--color-sand-light), var(--color-sand));
+    border: 1px solid var(--color-sand);
+    border-radius: var(--radius-btn);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .btn-soft:hover {
+    background: linear-gradient(135deg, var(--color-sand), var(--color-sand-dark));
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+
+  /* Primary CTA button */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-cream);
+    background: linear-gradient(135deg, var(--color-espresso), var(--color-espresso-light));
+    border: 1px solid var(--color-espresso);
+    border-radius: var(--radius-btn);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card-hover);
+    opacity: 0.92;
+  }
+
+  /* Status badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-low    { background: #E8F5E9; color: #2E7D32; }
+  .badge-moderate { background: #FFF3E0; color: #E65100; }
+  .badge-high   { background: #FFEBEE; color: #C62828; }
+  .badge-success { background: #E8F5E9; color: #2E7D32; }
+  .badge-warning { background: #FFF3E0; color: #E65100; }
+  .badge-danger  { background: #FFEBEE; color: #C62828; }
+}

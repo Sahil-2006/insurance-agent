@@ -34,9 +34,18 @@
 - Saves user profiles and past recommendations to a local JSON file
 - Supports lightweight recall for demo continuity and explainability
 
+- Executes a structured plan: Profiling -> Risk Analysis -> Simulation -> Evaluation -> Critique -> Memory -> Adaptive Learning
+
+### Adaptive Learner Agent
+
+- Monitors the decision pipeline for 'mistakes' (e.g., Critic reranks)
+- Performs real-time gradient descent updates on the Neural Network weights
+- Closes the loop between advisor execution and environment feedback
+
 ### Recommendation Agent
 
-- Orchestrates the full multi-agent flow
+- Acting as the high-level entry point and API interface
+- Delegates all orchestration logic to the Goal Planner Agent
 - Returns the best policy, final recommendation, expected loss, critic output, and explanation
 
 ## Reserved Extension Points

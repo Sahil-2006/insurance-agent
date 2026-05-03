@@ -155,3 +155,12 @@ cython_debug/
 
 # Project specific
 app/data/memory_store.json
+.vercel
+
+# Node.js
+node_modules/
+dist/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
