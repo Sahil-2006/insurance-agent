@@ -67,15 +67,23 @@ def test_scenario_simulation_with_dependents_increases_cost() -> None:
 
 def test_scenario_simulation_with_high_liabilities() -> None:
     """High liability ratio should increase income loss probability."""
-    low_liability = _build_sample_profile(liabilities=0, liability_ratio=0.0, net_worth=2000000)
-    high_liability = _build_sample_profile(liabilities=3000000, liability_ratio=3.33, net_worth=-1000000)
+    low_liability = _build_sample_profile(
+        liabilities=0, liability_ratio=0.0, net_worth=2000000
+    )
+    high_liability = _build_sample_profile(
+        liabilities=3000000, liability_ratio=3.33, net_worth=-1000000
+    )
 
     low_result = ScenarioSimulationAgent().simulate(low_liability)
     high_result = ScenarioSimulationAgent().simulate(high_liability)
 
     # Find income_loss scenario in both
-    low_income_loss = next(s for s in low_result.scenario_breakdown if s.scenario_name == "income_loss")
-    high_income_loss = next(s for s in high_result.scenario_breakdown if s.scenario_name == "income_loss")
+    low_income_loss = next(
+        s for s in low_result.scenario_breakdown if s.scenario_name == "income_loss"
+    )
+    high_income_loss = next(
+        s for s in high_result.scenario_breakdown if s.scenario_name == "income_loss"
+    )
 
     assert high_income_loss.probability > low_income_loss.probability
 
@@ -115,7 +123,9 @@ def test_memory_store_saves_and_loads_recommendations(tmp_path: Path) -> None:
 def test_memory_store_can_retrieve_similar_recommendations(tmp_path: Path) -> None:
     store = MemoryStore(storage_path=tmp_path / "memory.json")
 
-    profile = _build_sample_profile(age=36, income=850000, dependents=2, liabilities=1200000)
+    profile = _build_sample_profile(
+        age=36, income=850000, dependents=2, liabilities=1200000
+    )
     ranked_policy = RankedPolicy(
         policy=Policy(
             policy_name="Similar Policy",
@@ -150,7 +160,9 @@ def test_goal_planner_includes_memory_recall_step() -> None:
     plan = GoalPlannerAgent().generate_plan()
 
     assert "RecallMemoryTool" in plan.steps
-    assert plan.steps.index("RecallMemoryTool") < plan.steps.index("EvaluatePoliciesTool")
+    assert plan.steps.index("RecallMemoryTool") < plan.steps.index(
+        "EvaluatePoliciesTool"
+    )
 
 
 def test_critic_can_rerank_when_first_policy_has_clear_issues() -> None:
@@ -195,7 +207,12 @@ def test_critic_can_rerank_when_first_policy_has_clear_issues() -> None:
             policy_type="term_life",
             coverage=6000000,
             premium=25000,
-            target_profile=["family_protection", "family_builder", "high", "has_dependents"],
+            target_profile=[
+                "family_protection",
+                "family_builder",
+                "high",
+                "has_dependents",
+            ],
             notes="Better test policy",
         ),
         total_score=88.0,
@@ -254,7 +271,10 @@ def test_recommendation_response_includes_agentic_fields() -> None:
     )
 
     assert result.best_policy.policy.policy_name
-    assert result.final_recommendation.policy.policy_name == result.best_policy.policy.policy_name
+    assert (
+        result.final_recommendation.policy.policy_name
+        == result.best_policy.policy.policy_name
+    )
     assert len(result.top_policies) == 3
     assert result.risk_score > 0
     assert result.expected_loss > 0  # Now dynamic, not hardcoded 16000
@@ -280,7 +300,10 @@ def test_high_liability_user_has_non_low_risk() -> None:
 
     assert result.risk_label in {"moderate", "high"}
     assert result.best_policy.policy.policy_name
-    assert result.final_recommendation.policy.policy_name == result.best_policy.policy.policy_name
+    assert (
+        result.final_recommendation.policy.policy_name
+        == result.best_policy.policy.policy_name
+    )
 
 
 def test_different_profiles_produce_different_expected_losses() -> None:
@@ -288,10 +311,24 @@ def test_different_profiles_produce_different_expected_losses() -> None:
     agent = RecommendationAgent()
 
     young_result = agent.recommend(
-        UserInput(age=22, income=300000, dependents=0, assets=0, liabilities=0, insurance_goal="health_security")
+        UserInput(
+            age=22,
+            income=300000,
+            dependents=0,
+            assets=0,
+            liabilities=0,
+            insurance_goal="health_security",
+        )
     )
     senior_result = agent.recommend(
-        UserInput(age=55, income=1500000, dependents=3, assets=5000000, liabilities=2000000, insurance_goal="family_protection")
+        UserInput(
+            age=55,
+            income=1500000,
+            dependents=3,
+            assets=5000000,
+            liabilities=2000000,
+            insurance_goal="family_protection",
+        )
     )
 
     assert young_result.expected_loss != senior_result.expected_loss

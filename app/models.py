@@ -27,7 +27,8 @@ class UserInput(BaseModel):
     )
     age: int = Field(default=30, ge=18, le=70)
     location: str = Field(
-        default="Urban", description="User's location type (e.g., Urban, Semi-Urban, Rural)"
+        default="Urban",
+        description="User's location type (e.g., Urban, Semi-Urban, Rural)",
     )
     state: str = Field(default="", description="State or province of residence")
     city: str = Field(default="", description="City or exact local area")

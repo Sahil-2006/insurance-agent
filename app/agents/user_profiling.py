@@ -81,4 +81,3 @@ class UserProfilingAgent:
             score += 7
 
         return score
-
